@@ -3,6 +3,7 @@ import pandas as pd
 PARAMETERS = ['bathrooms', 'sqft_living', 'sqft_lot', 'floors']
 NUMBER = 4
 LENGTH = 100
+TEST = 50
 
 data = pd.read_csv('data.csv')
 
@@ -12,7 +13,9 @@ for i in PARAMETERS:
     x.append(data[i].to_numpy())
 
 # weights
-weights = [0 for i in range(NUMBER)]
+weights = []
+for i in range(NUMBER):
+    weights.append(0.0)
 
 # learning rate
 alpha = 0.0000001
@@ -25,11 +28,10 @@ def calculateCost(weights):
         for j in range(NUMBER):
             cost += weights[j] * x[j][i]
         cost -= y[i]
+        cost = cost**2
         costs.append(cost)
-    
-    totalCost = sum(costs)/len(costs)
 
-    return totalCost
+    return sum(costs)
 
 
 def calculateSpecificCost(weights, index):
@@ -42,12 +44,15 @@ def calculateSpecificCost(weights, index):
 
 
 def gradientDescent(weights):
-    adjustedWeights = [i for i in weights]
+    adjustedWeights = []
+    for i in weights:
+        adjustedWeights.append(i)
+
     gradient = [0 for _ in range(NUMBER)]
 
     for i in range(LENGTH):
         for j in range(NUMBER):
-            gradient[j] += x[j][i] * (calculateSpecificCost(adjustedWeights, j))
+            gradient[j] += -2 * x[j][i] * calculateCost(adjustedWeights)
     
     for i in range(NUMBER):
         adjustedWeights[i] -= alpha * gradient[i]
@@ -68,8 +73,29 @@ def train(epochs, epsilon, originalWeights):
     print(originalWeights)
 
 
-# TODO: create a function to test on the data not previously shown to the model and generate an accuracy percentage
-def test(weights):
-    raise NotImplementedError
+def predict(weights, input):
+    prediction = 0
+    for i in range(NUMBER):
+        prediction += weights[i] * x[i][input]
+    return prediction
 
-train(100, 5.0, weights)
+print(x)
+print(len(x))
+
+def test(weights):
+    scores = []
+
+    for i in range(LENGTH+1, LENGTH+TEST+1):
+        prediction = predict(weights, i)
+        # calculate accuracy
+        error = 100.0*(y[i] - abs(prediction - y[i]))/y[i]
+        scores.append(error)
+        print(error)
+
+    print("Accuracy:", sum(scores)/len(scores))
+
+
+EPOCHS = 300
+
+train(EPOCHS, 5.0, weights)
+test(weights)
